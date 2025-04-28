@@ -1,0 +1,81 @@
+{% extends "layout.html" %}
+
+{% block title %}Dashboard{% endblock %}
+{% block heading %}Dashboard Overview{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <p class="text-gray-600">Welcome back, {{ session.username }}. Here's your cloud spending summary.</p>
+</div>
+
+<div class="card-grid">
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Azure Total</h3>
+            <div class="card-icon azure">
+                <i class='bx bxl-microsoft'></i>
+            </div>
+        </div>
+        <p class="card-value">{{ "%.2f"|format(azure_total) }} BDT</p>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">GCP Total</h3>
+            <div class="card-icon gcp">
+                <i class='bx bxl-google-cloud'></i>
+            </div>
+        </div>
+        <p class="card-value">{{ "%.2f"|format(gcp_total) }} BDT</p>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Combined Total</h3>
+            <div class="card-icon">
+                <i class='bx bx-cloud'></i>
+            </div>
+        </div>
+        <p class="card-value">{{ "%.2f"|format(azure_total + gcp_total) }} BDT</p>
+    </div>
+</div>
+
+<div class="mt-8 bg-white rounded-lg shadow p-6">
+    <canvas id="cloudChart" height="300"></canvas>
+</div>
+
+<script>
+  const ctx = document.getElementById('cloudChart').getContext('2d');
+  const cloudChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: ['Azure', 'GCP'],
+      datasets: [{
+        label: 'Total Spend in BDT',
+        data: [{{ azure_total|default(0) }}, {{ gcp_total|default(0) }}],
+        backgroundColor: ['#0078d4', '#34a853'],
+        borderColor: ['#005a9e', '#2d8e4a'],
+        borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: {
+          position: 'top',
+        },
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            callback: function(value) {
+              return value + ' BDT';
+            }
+          }
+        }
+      }
+    }
+  });
+</script>
+{% endblock %}

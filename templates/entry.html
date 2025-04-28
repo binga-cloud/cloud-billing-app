@@ -1,0 +1,147 @@
+{% extends "layout.html" %}
+
+{% block title %}New Entry{% endblock %}
+{% block heading %}Add New Billing Entry{% endblock %}
+
+{% block actions %}
+<a href="{{ url_for('report') }}" class="btn btn-secondary">
+    <i class='bx bx-arrow-back'></i> Back to Reports
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="form-card">
+    <form method="post" id="entryForm">
+        <!-- Provider Field -->
+        <div class="form-group">
+            <label>Provider</label>
+            <div class="flex gap-2 mb-1">
+                <select name="provider" class="form-control flex-1" required>
+                    <option value="">Select Provider</option>
+                    {% for p in providers %}
+                    <option value="{{ p }}">{{ p }}</option>
+                    {% endfor %}
+                </select>
+                <button type="button" onclick="toggleField('provider')" class="btn btn-secondary px-3">
+                    <i class='bx bx-plus'></i>
+                </button>
+            </div>
+            <input type="text" id="new_provider" name="new_provider" class="form-control hidden mt-1" placeholder="New Provider Name" disabled>
+        </div>
+
+        <!-- Year Field -->
+        <div class="form-group">
+            <label>Year</label>
+            <div class="flex gap-2 mb-1">
+                <select name="year" class="form-control flex-1" required>
+                    <option value="">Select Year</option>
+                    {% for y in years %}
+                    <option value="{{ y }}">{{ y }}</option>
+                    {% endfor %}
+                </select>
+                <button type="button" onclick="toggleField('year')" class="btn btn-secondary px-3">
+                    <i class='bx bx-plus'></i>
+                </button>
+            </div>
+            <input type="text" id="new_year" name="new_year" class="form-control hidden mt-1" placeholder="New Year (e.g. 2025)" disabled>
+        </div>
+
+        <!-- Month Field -->
+        <div class="form-group">
+            <label>Month</label>
+            <div class="flex gap-2 mb-1">
+                <select name="month" class="form-control flex-1" required>
+                    <option value="">Select Month</option>
+                    {% for m in months %}
+                    <option value="{{ m }}">{{ m }}</option>
+                    {% endfor %}
+                </select>
+                <button type="button" onclick="toggleField('month')" class="btn btn-secondary px-3">
+                    <i class='bx bx-plus'></i>
+                </button>
+            </div>
+            <input type="text" id="new_month" name="new_month" class="form-control hidden mt-1" placeholder="New Month (e.g. January)" disabled>
+        </div>
+
+        <!-- Company Field -->
+        <div class="form-group">
+            <label>Company Name</label>
+            <div class="flex gap-2 mb-1">
+                <select name="company" class="form-control flex-1" required>
+                    <option value="">Select Company</option>
+                    {% for c in companies %}
+                    <option value="{{ c }}">{{ c }}</option>
+                    {% endfor %}
+                </select>
+                <button type="button" onclick="toggleField('company')" class="btn btn-secondary px-3">
+                    <i class='bx bx-plus'></i>
+                </button>
+            </div>
+            <input type="text" id="new_company" name="new_company" class="form-control hidden mt-1" placeholder="New Company Name" disabled>
+        </div>
+
+        <!-- Service Field -->
+        <div class="form-group">
+            <label>Service</label>
+            <div class="flex gap-2 mb-1">
+                <select name="service" class="form-control flex-1" required>
+                    <option value="">Select Service</option>
+                    {% for s in services %}
+                    <option value="{{ s }}">{{ s }}</option>
+                    {% endfor %}
+                </select>
+                <button type="button" onclick="toggleField('service')" class="btn btn-secondary px-3">
+                    <i class='bx bx-plus'></i>
+                </button>
+            </div>
+            <input type="text" id="new_service" name="new_service" class="form-control hidden mt-1" placeholder="New Service Name" disabled>
+        </div>
+
+        <!-- Amount Fields -->
+        <div class="form-group-row">
+            <div class="form-group">
+                <label for="amount_usd">Amount (USD)</label>
+                <input type="number" step="0.01" name="amount_usd" id="amount_usd" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label for="conversion_rate">Conversion Rate (USD to BDT)</label>
+                <input type="number" step="0.01" name="conversion_rate" id="conversion_rate" class="form-control" required>
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button type="reset" class="btn btn-secondary">
+                <i class='bx bx-reset'></i> Reset
+            </button>
+            <button type="submit" class="btn btn-primary">
+                <i class='bx bx-save'></i> Submit Entry
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+function toggleField(fieldType) {
+    const select = document.querySelector(`select[name=\"${fieldType}\"]`);
+    const input = document.getElementById(`new_${fieldType}`);
+
+    if (input.classList.contains('hidden')) {
+        input.classList.remove('hidden');
+        input.disabled = false;
+        input.required = true;
+        select.disabled = true;
+        select.required = false;
+        select.value = '';
+        input.focus();
+    } else {
+        input.classList.add('hidden');
+        input.disabled = true;
+        input.required = false;
+        select.disabled = false;
+        select.required = true;
+        input.value = '';
+        select.focus();
+    }
+}
+</script>
+{% endblock %}

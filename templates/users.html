@@ -1,0 +1,55 @@
+{% extends "layout.html" %}
+
+{% block title %}User Management{% endblock %}
+{% block heading %}User Management{% endblock %}
+
+{% block actions %}
+<a href="{{ url_for('dashboard') }}" class="btn btn-secondary">
+    <i class='bx bx-arrow-back'></i> Back to Dashboard
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="bg-white rounded-lg shadow overflow-hidden">
+    <div class="p-4 border-b">
+        <h3 class="font-semibold text-lg">Manage System Users</h3>
+        <p class="text-sm text-gray-600">Only admins can modify user roles</p>
+    </div>
+
+    <div class="overflow-x-auto">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Username</th>
+                    <th>Role</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr>
+                    <td>{{ user[1] }}</td>
+                    <td>
+                        <span class="badge {% if user[2] == 'admin' %}badge-admin{% else %}badge-monitor{% endif %}">
+                            {{ user[2]|capitalize }}
+                        </span>
+                    </td>
+                    <td>
+                        <form method="post" action="{{ url_for('users') }}" class="flex items-center gap-2">
+                            <input type="hidden" name="user_id" value="{{ user[0] }}">
+                            <select name="role" class="form-control text-sm py-1 px-2 w-auto">
+                                <option value="admin" {% if user[2] == 'admin' %}selected{% endif %}>Admin</option>
+                                <option value="monitor" {% if user[2] == 'monitor' %}selected{% endif %}>Monitor</option>
+                            </select>
+                            <button type="submit" class="btn btn-primary text-sm py-1 px-3">
+                                <i class='bx bx-save'></i> Update
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

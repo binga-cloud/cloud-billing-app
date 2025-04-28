@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cloud Billing App | {% block title %}{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="layout-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2 class="text-xl font-bold text-white">Cloud Billing</h2>
+            </div>
+
+            <nav class="nav-menu">
+                <a href="{{ url_for('dashboard') }}" class="nav-link {% if request.path == url_for('dashboard') %}active{% endif %}">
+                    <i class='bx bx-dashboard'></i>
+                    <span class="nav-text">Dashboard</span>
+                </a>
+                <a href="{{ url_for('entry') }}" class="nav-link {% if request.path == url_for('entry') %}active{% endif %}">
+                    <i class='bx bx-plus-circle'></i>
+                    <span class="nav-text">New Entry</span>
+                </a>
+                <a href="{{ url_for('report') }}" class="nav-link {% if request.path == url_for('report') %}active{% endif %}">
+                    <i class='bx bx-file'></i>
+                    <span class="nav-text">Reports</span>
+                </a>
+                {% if session.get('role') == 'admin' %}
+                <a href="{{ url_for('users') }}" class="nav-link {% if request.path == url_for('users') %}active{% endif %}">
+                    <i class='bx bx-user'></i>
+                    <span class="nav-text">Users</span>
+                </a>
+                {% endif %}
+            </nav>
+
+<!-- User Profile - Replace this section only -->
+<div class="mt-auto">
+  <div class="user-panel">
+    <div class="user-avatar">
+      <i class='bx bxs-user-circle'></i>
+    </div>
+    <div class="user-info">
+      <span class="username">{{ session.username }}</span>
+      <span class="user-role">{{ session.role|capitalize }}</span>
+    </div>
+    <a href="{{ url_for('logout') }}" class="logout-btn" title="Logout">
+      <i class='bx bx-log-out'></i>
+    </a>
+  </div>
+</div>
+
+        </aside>
+
+        <main class="main-content">
+            <div class="flex justify-between items-center mb-6">
+                <h1 class="text-2xl font-bold text-gray-800">{% block heading %}{% endblock %}</h1>
+                {% block actions %}{% endblock %}
+            </div>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="flash-messages mb-6">
+                        {% for category, message in messages %}
+                            <div class="flash-message {{ category }}">{{ message }}</div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+</body>
+</html>

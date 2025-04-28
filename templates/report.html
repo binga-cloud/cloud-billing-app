@@ -1,0 +1,103 @@
+{% extends "layout.html" %}
+
+{% block title %}Reports{% endblock %}
+{% block heading %}Billing Reports{% endblock %}
+
+{% block actions %}
+<a href="{{ url_for('entry') }}" class="btn btn-primary">
+    <i class='bx bx-plus'></i> New Entry
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <form method="get" class="flex items-end gap-4">
+        <div class="form-group flex-1">
+            <label for="provider">Provider</label>
+            <select name="provider" id="provider" class="form-control">
+                <option value="">All Providers</option>
+                <option value="Azure" {% if request.args.get('provider') == 'Azure' %}selected{% endif %}>Azure</option>
+                <option value="GCP" {% if request.args.get('provider') == 'GCP' %}selected{% endif %}>GCP</option>
+            </select>
+        </div>
+
+        <div class="form-group flex-1">
+            <label for="service">Service</label>
+            <select name="service" id="service" class="form-control">
+                <option value="">All Services</option>
+                {% for s in services %}
+                <option value="{{ s }}" {% if request.args.get('service') == s %}selected{% endif %}>{{ s }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group flex-1">
+            <label for="month">Month</label>
+            <select name="month" id="month" class="form-control">
+                <option value="">All Months</option>
+                {% for m in months %}
+                <option value="{{ m }}" {% if request.args.get('month') == m %}selected{% endif %}>{{ m }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <button type="submit" class="btn btn-primary h-[42px]">
+            <i class='bx bx-filter-alt'></i> Filter
+        </button>
+    </form>
+</div>
+
+<div class="bg-white rounded-lg shadow overflow-hidden">
+    <div class="p-4 border-b">
+        <h3 class="font-semibold text-lg">Total Amount: {{ "%.2f"|format(total) }} BDT</h3>
+    </div>
+
+    <div class="overflow-x-auto">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Provider</th>
+                    <th>Company</th>
+                    <th>Year</th>
+                    <th>Month</th>
+                    <th>Service</th>
+                    <th>USD</th>
+                    <th>Rate</th>
+                    <th>BDT</th>
+                    <th>Charge</th>
+                    <th>VAT</th>
+                    <th>Total</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in results %}
+                <tr>
+                    <td>{{ row[1] }}</td>
+                    <td>{{ row[4] }}</td>
+                    <td>{{ row[2] }}</td>
+                    <td>{{ row[3] }}</td>
+                    <td>{{ row[5] }}</td>
+                    <td>{{ "%.2f"|format(row[6]) }}</td>
+                    <td>{{ row[7] }}</td>
+                    <td>{{ "%.2f"|format(row[8]) }}</td>
+                    <td>{{ "%.2f"|format(row[9]) }}</td>
+                    <td>{{ "%.2f"|format(row[10]) }}</td>
+                    <td class="font-medium">{{ "%.2f"|format(row[11]) }}</td>
+                    <td class="flex gap-2">
+                        <a href="{{ url_for('edit_entry', entry_id=row[0]) }}" class="text-blue-500 hover:text-blue-700">
+                            <i class='bx bx-edit'></i>
+                        </a>
+                        <form method="post" action="{{ url_for('delete_entry', entry_id=row[0]) }}" onsubmit="return confirm('Are you sure you want to delete this entry?');">
+                            <button type="submit" class="text-red-500 hover:text-red-700">
+                                <i class='bx bx-trash'></i>
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
