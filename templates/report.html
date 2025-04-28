@@ -10,9 +10,11 @@
 {% endblock %}
 
 {% block content %}
+<!-- Filter Section -->
 <div class="mb-6">
-    <form method="get" class="flex items-end gap-4">
-        <div class="form-group flex-1">
+    <form method="get" class="flex flex-wrap items-end gap-4">
+        <!-- Provider Filter -->
+        <div class="form-group flex-1 min-w-[200px]">
             <label for="provider">Provider</label>
             <select name="provider" id="provider" class="form-control">
                 <option value="">All Providers</option>
@@ -21,22 +23,46 @@
             </select>
         </div>
 
-        <div class="form-group flex-1">
-            <label for="service">Service</label>
-            <select name="service" id="service" class="form-control">
-                <option value="">All Services</option>
-                {% for s in services %}
-                <option value="{{ s }}" {% if request.args.get('service') == s %}selected{% endif %}>{{ s }}</option>
+        <!-- Company Filter -->
+        <div class="form-group flex-1 min-w-[200px]">
+            <label for="company">Company</label>
+            <select name="company" id="company" class="form-control">
+                <option value="">All Companies</option>
+                {% for c in companies %}
+                <option value="{{ c }}" {% if request.args.get('company') == c %}selected{% endif %}>{{ c }}</option>
                 {% endfor %}
             </select>
         </div>
 
-        <div class="form-group flex-1">
+        <!-- Year Filter -->
+        <div class="form-group flex-1 min-w-[150px]">
+            <label for="year">Year</label>
+            <select name="year" id="year" class="form-control">
+                <option value="">All Years</option>
+                {% for y in years %}
+                <option value="{{ y }}" {% if request.args.get('year') == y %}selected{% endif %}>{{ y }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Month Filter -->
+        <div class="form-group flex-1 min-w-[150px]">
             <label for="month">Month</label>
             <select name="month" id="month" class="form-control">
                 <option value="">All Months</option>
                 {% for m in months %}
                 <option value="{{ m }}" {% if request.args.get('month') == m %}selected{% endif %}>{{ m }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Service Filter -->
+        <div class="form-group flex-1 min-w-[200px]">
+            <label for="service">Service</label>
+            <select name="service" id="service" class="form-control">
+                <option value="">All Services</option>
+                {% for s in services %}
+                <option value="{{ s }}" {% if request.args.get('service') == s %}selected{% endif %}>{{ s }}</option>
                 {% endfor %}
             </select>
         </div>
@@ -47,11 +73,8 @@
     </form>
 </div>
 
+<!-- Results Table -->
 <div class="bg-white rounded-lg shadow overflow-hidden">
-    <div class="p-4 border-b">
-        <h3 class="font-semibold text-lg">Total Amount: {{ "%.2f"|format(total) }} BDT</h3>
-    </div>
-
     <div class="overflow-x-auto">
         <table class="table">
             <thead>
@@ -83,7 +106,7 @@
                     <td>{{ "%.2f"|format(row[8]) }}</td>
                     <td>{{ "%.2f"|format(row[9]) }}</td>
                     <td>{{ "%.2f"|format(row[10]) }}</td>
-                    <td class="font-medium">{{ "%.2f"|format(row[11]) }}</td>
+                    <td>{{ "%.2f"|format(row[11]) }}</td>
                     <td class="flex gap-2">
                         <a href="{{ url_for('edit_entry', entry_id=row[0]) }}" class="text-blue-500 hover:text-blue-700">
                             <i class='bx bx-edit'></i>
@@ -96,8 +119,30 @@
                     </td>
                 </tr>
                 {% endfor %}
+
+                <!-- Total Row -->
+                {% if results %}
+                <tr class="bg-gray-50 font-semibold">
+                    <td colspan="5" class="text-right">Total:</td>
+                    <td>{{ "%.2f"|format(results|sum(attribute=6)) }}</td>
+                    <td>-</td>
+                    <td>{{ "%.2f"|format(results|sum(attribute=8)) }}</td>
+                    <td>{{ "%.2f"|format(results|sum(attribute=9)) }}</td>
+                    <td>{{ "%.2f"|format(results|sum(attribute=10)) }}</td>
+                    <td class="text-blue-600">{{ "%.2f"|format(total) }}</td>
+                    <td></td>
+                </tr>
+                {% endif %}
             </tbody>
         </table>
     </div>
 </div>
+
+{% if not results %}
+<div class="bg-white rounded-lg shadow p-8 text-center mt-6">
+    <i class='bx bx-package text-4xl text-gray-400 mb-3'></i>
+    <h4 class="text-lg font-medium text-gray-700">No records found</h4>
+    <p class="text-gray-500 mt-1">Try adjusting your filters or add new entries</p>
+</div>
+{% endif %}
 {% endblock %}
