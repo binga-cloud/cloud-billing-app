@@ -1,15 +1,27 @@
 from flask import Flask, render_template, request, redirect, session, flash, g, url_for
+from werkzeug.utils import secure_filename
 import sqlite3
 import os
+import pandas as pd
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'
 DATABASE = 'billing.db'
 
+# Configure upload folder
+UPLOAD_FOLDER = 'uploads'
+ALLOWED_EXTENSIONS = {'xlsx', 'xls'}
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+# Create upload directory if it doesn't exist
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+
 def get_db():
     if 'db' not in g:
         g.db = sqlite3.connect(DATABASE)
     return g.db
+
 
 @app.teardown_appcontext
 def close_db(exception):
@@ -17,9 +29,16 @@ def close_db(exception):
     if db is not None:
         db.close()
 
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+# Initialize database if it doesn't exist
 if not os.path.exists(DATABASE):
-    with sqlite3.connect(DATABASE) as conn:
-        conn.execute("""
+    with app.app_context():
+        db = get_db()
+        db.execute("""
             CREATE TABLE users (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 username TEXT UNIQUE NOT NULL,
@@ -27,7 +46,7 @@ if not os.path.exists(DATABASE):
                 role TEXT NOT NULL
             )
         """)
-        conn.execute("""
+        db.execute("""
             CREATE TABLE billing (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 provider TEXT NOT NULL,
@@ -43,7 +62,7 @@ if not os.path.exists(DATABASE):
                 total_bdt REAL NOT NULL
             )
         """)
-        conn.execute("""
+        db.execute("""
             CREATE TABLE metadata (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 type TEXT NOT NULL,
@@ -51,12 +70,15 @@ if not os.path.exists(DATABASE):
                 UNIQUE(type, value)
             )
         """)
+        db.commit()
+
 
 @app.route('/')
 def home():
     if 'user_id' in session:
         return redirect('/dashboard')
     return redirect('/login')
+
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -71,6 +93,7 @@ def register():
         flash(f'Registered successfully as {role}.')
         return redirect('/login')
     return render_template('register.html')
+
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -87,10 +110,12 @@ def login():
         flash('Invalid credentials')
     return render_template('login.html')
 
+
 @app.route('/logout')
 def logout():
     session.clear()
     return redirect('/login')
+
 
 @app.route('/entry', methods=['GET', 'POST'])
 def entry():
@@ -102,7 +127,8 @@ def entry():
     if request.method == 'POST':
         for field in ['provider', 'year', 'month', 'company', 'service']:
             if f'new_{field}' in request.form and request.form[f'new_{field}']:
-                db.execute("INSERT OR IGNORE INTO metadata (type, value) VALUES (?, ?)", (field, request.form[f'new_{field}']))
+                db.execute("INSERT OR IGNORE INTO metadata (type, value) VALUES (?, ?)",
+                           (field, request.form[f'new_{field}']))
 
         provider = request.form.get('new_provider') or request.form.get('provider')
         year = request.form.get('new_year') or request.form.get('year')
@@ -123,7 +149,8 @@ def entry():
                 amount_usd, conversion_rate, amount_bdt,
                 service_charge, vat, total_bdt
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (provider, year, month, company, service, amount_usd, conversion_rate, amount_bdt, service_charge, vat, total_bdt))
+        """, (provider, year, month, company, service, amount_usd, conversion_rate, amount_bdt, service_charge, vat,
+              total_bdt))
         db.commit()
         flash('Entry submitted successfully!', 'success')
         return redirect('/entry')
@@ -138,6 +165,78 @@ def entry():
     }
 
     return render_template('entry.html', **data)
+
+
+@app.route('/upload', methods=['GET', 'POST'])
+def upload_file():
+    if 'user_id' not in session:
+        return redirect('/login')
+
+    if request.method == 'POST':
+        if 'file' not in request.files:
+            flash('No file selected')
+            return redirect(request.url)
+
+        file = request.files['file']
+        if file.filename == '':
+            flash('No file selected')
+            return redirect(request.url)
+
+        if file and allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            file.save(filepath)
+
+            try:
+                df = pd.read_excel(filepath)
+                db = get_db()
+                imported_count = 0
+
+                for _, row in df.iterrows():
+                    try:
+                        amount_usd = float(row['Amount USD'])
+                        conversion_rate = float(row['Conversion Rate'])
+                        amount_bdt = amount_usd * conversion_rate
+                        service_charge = round(amount_bdt * 0.07, 1)
+                        vat = round((amount_bdt + service_charge) * 0.05, 1)
+                        total_bdt = amount_bdt + service_charge + vat
+
+                        db.execute("""
+                            INSERT INTO billing (
+                                provider, year, month, company_name, service,
+                                amount_usd, conversion_rate, amount_bdt,
+                                service_charge, vat, total_bdt
+                            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        """, (
+                            row['Provider'],
+                            str(row['Year']),
+                            row['Month'],
+                            row['Company'],
+                            row['Service'],
+                            amount_usd,
+                            conversion_rate,
+                            amount_bdt,
+                            service_charge,
+                            vat,
+                            total_bdt
+                        ))
+                        imported_count += 1
+                    except Exception as e:
+                        flash(f"Error importing row {_ + 1}: {str(e)}", "warning")
+                        continue
+
+                db.commit()
+                flash(f'Successfully imported {imported_count} records!', 'success')
+                return redirect(url_for('report'))
+
+            except Exception as e:
+                flash(f'Error processing file: {str(e)}', 'error')
+                return redirect(request.url)
+            finally:
+                if os.path.exists(filepath):
+                    os.remove(filepath)
+
+    return render_template('upload.html')
 
 @app.route('/edit/<int:entry_id>', methods=['GET', 'POST'])
 def edit_entry(entry_id):
@@ -206,10 +305,14 @@ def report():
     query = "SELECT * FROM billing WHERE 1=1"
     params = []
 
+    # Get all filter values from request
     provider = request.args.get('provider')
     service = request.args.get('service')
     month = request.args.get('month')
+    company = request.args.get('company')
+    year = request.args.get('year')
 
+    # Add filters to query if they exist
     if provider:
         query += " AND provider = ?"
         params.append(provider)
@@ -219,14 +322,30 @@ def report():
     if month:
         query += " AND month = ?"
         params.append(month)
+    if company:
+        query += " AND company_name = ?"
+        params.append(company)
+    if year:
+        query += " AND year = ?"
+        params.append(year)
 
+    # Get filtered results
     results = db.execute(query, params).fetchall()
-
     total = sum(row[11] for row in results) if results else 0
-    services = sorted(set(row[0] for row in db.execute("SELECT service FROM billing").fetchall()))
-    months = sorted(set(row[0] for row in db.execute("SELECT month FROM billing").fetchall()))
 
-    return render_template('report.html', results=results, total=total, services=services, months=months)
+    # Get distinct values for dropdowns - FIXED INDEXING
+    services = sorted({row[0] for row in db.execute("SELECT DISTINCT service FROM billing").fetchall()})
+    months = sorted({row[0] for row in db.execute("SELECT DISTINCT month FROM billing").fetchall()})
+    companies = sorted({row[0] for row in db.execute("SELECT DISTINCT company_name FROM billing").fetchall()})
+    years = sorted({row[0] for row in db.execute("SELECT DISTINCT year FROM billing").fetchall()})
+
+    return render_template('report.html',
+                         results=results,
+                         total=total,
+                         services=services,
+                         months=months,
+                         companies=companies,
+                         years=years)
 
 @app.route('/dashboard')
 def dashboard():
