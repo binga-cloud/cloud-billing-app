@@ -4,14 +4,19 @@
 {% block heading %}Billing Reports{% endblock %}
 
 {% block actions %}
+{% if session.role == 'admin' %}
 <a href="{{ url_for('entry') }}" class="btn btn-primary">
     <i class='bx bx-plus'></i> New Entry
 </a>
-
-</a>
-<a href="{{ url_for('upload_file') }}" class="btn btn-secondary">
-    <i class='bx bx-upload'></i> Import Excel
-</a>
+{% endif %}
+<div class="flex gap-2">
+    <a href="{{ url_for('export_excel') }}" class="btn btn-success">
+        <i class='bx bx-download'></i> Export Excel
+    </a>
+    <a href="{{ url_for('export_pdf') }}" class="btn btn-danger">
+        <i class='bx bx-file'></i> Export PDF
+    </a>
+</div>
 
 {% endblock %}
 
@@ -95,6 +100,8 @@
                     <th>BDT</th>
                     <th>Charge</th>
                     <th>VAT</th>
+                    <th>Received</th>
+                    <th>Disbursed</th>
                     <th>Total</th>
                     <th>Actions</th>
                 </tr>
@@ -112,17 +119,30 @@
                     <td>{{ "%.2f"|format(row[8]) }}</td>
                     <td>{{ "%.2f"|format(row[9]) }}</td>
                     <td>{{ "%.2f"|format(row[10]) }}</td>
+                    <td>{{ row[12] if row[12] else '-' }}</td>
+                    <td>{{ row[13] if row[13] else '-' }}</td>
                     <td>{{ "%.2f"|format(row[11]) }}</td>
-                    <td class="flex gap-2">
-                        <a href="{{ url_for('edit_entry', entry_id=row[0]) }}" class="text-blue-500 hover:text-blue-700">
-                            <i class='bx bx-edit'></i>
-                        </a>
-                        <form method="post" action="{{ url_for('delete_entry', entry_id=row[0]) }}" onsubmit="return confirm('Are you sure you want to delete this entry?');">
-                            <button type="submit" class="text-red-500 hover:text-red-700">
-                                <i class='bx bx-trash'></i>
-                            </button>
-                        </form>
-                    </td>
+
+<td class="py-2">
+    {% if session.role == 'admin' %}
+    <div class="flex items-center justify-center gap-2">
+        <a href="{{ url_for('edit_entry', entry_id=row[0]) }}"
+           class="text-blue-500 hover:text-blue-700 flex items-center">
+            <i class='bx bx-edit text-lg align-middle'></i>
+        </a>
+        <form method="post" action="{{ url_for('delete_entry', entry_id=row[0]) }}"
+              onsubmit="return confirm('Are you sure?');" class="flex items-center">
+            <button type="submit" class="text-red-500 hover:text-red-700 flex items-center">
+                <i class='bx bx-trash text-lg align-middle'></i>
+            </button>
+        </form>
+    </div>
+    {% else %}
+    <div class="flex justify-center">
+        <span class="text-gray-400 text-sm align-middle">View only</span>
+    </div>
+    {% endif %}
+</td>
                 </tr>
                 {% endfor %}
 

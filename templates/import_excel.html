@@ -1,0 +1,48 @@
+{% extends "layout.html" %}
+
+{% block title %}Import Excel{% endblock %}
+{% block heading %}Import Billing Data from Excel{% endblock %}
+
+{% block actions %}
+<a href="{{ url_for('report') }}" class="btn btn-secondary">
+    <i class='bx bx-arrow-back'></i> Back to Reports
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="bg-white rounded-lg shadow p-6">
+    <h3 class="text-lg font-semibold mb-4">Upload Excel File</h3>
+    
+    <form method="post" enctype="multipart/form-data">
+        <div class="form-group">
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+                Select Excel File (.xlsx, .xls)
+            </label>
+            <input type="file" name="file" class="form-control" accept=".xlsx,.xls" required>
+        </div>
+        
+        <div class="mt-6">
+            <button type="submit" class="btn btn-primary">
+                <i class='bx bx-upload'></i> Import Data
+            </button>
+        </div>
+    </form>
+    
+    <div class="mt-8 bg-blue-50 p-4 rounded-lg">
+        <h4 class="font-medium text-blue-800 mb-2">Excel Format Requirements:</h4>
+        <ul class="list-disc pl-5 text-sm text-blue-700">
+            <li><strong>Required columns:</strong> Provider, Year, Month, Company, Service, Amount USD, Conversion Rate</li>
+            <li><strong>Optional columns:</strong> Bill Received Date, Bill Disbursed Date</li>
+            <li>First row must be column headers</li>
+            <li>Date columns should be in Excel date format</li>
+            <li>Amounts should be numbers without currency symbols</li>
+        </ul>
+        
+        <div class="mt-4">
+            <a href="{{ url_for('export_excel') }}" class="btn btn-sm btn-secondary">
+                <i class='bx bx-download'></i> Download Template
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

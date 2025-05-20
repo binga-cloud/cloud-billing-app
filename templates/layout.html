@@ -7,6 +7,15 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+        <!-- Date Picker -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            flatpickr("#bill_received_date", {dateFormat: "Y-m-d"});
+            flatpickr("#bill_disbursed_date", {dateFormat: "Y-m-d"});
+        });
+    </script>
 </head>
 <body>
     <div class="layout-container">
@@ -15,26 +24,34 @@
                 <h2 class="text-xl font-bold text-white">Cloud Billing</h2>
             </div>
 
-            <nav class="nav-menu">
-                <a href="{{ url_for('dashboard') }}" class="nav-link {% if request.path == url_for('dashboard') %}active{% endif %}">
-                    <i class='bx bx-dashboard'></i>
-                    <span class="nav-text">Dashboard</span>
-                </a>
-                <a href="{{ url_for('entry') }}" class="nav-link {% if request.path == url_for('entry') %}active{% endif %}">
-                    <i class='bx bx-plus-circle'></i>
-                    <span class="nav-text">New Entry</span>
-                </a>
-                <a href="{{ url_for('report') }}" class="nav-link {% if request.path == url_for('report') %}active{% endif %}">
-                    <i class='bx bx-file'></i>
-                    <span class="nav-text">Reports</span>
-                </a>
-                {% if session.get('role') == 'admin' %}
-                <a href="{{ url_for('users') }}" class="nav-link {% if request.path == url_for('users') %}active{% endif %}">
-                    <i class='bx bx-user'></i>
-                    <span class="nav-text">Users</span>
-                </a>
-                {% endif %}
-            </nav>
+<nav class="nav-menu">
+    <a href="{{ url_for('dashboard') }}" class="nav-link {% if request.path == url_for('dashboard') %}active{% endif %}">
+        <i class='bx bx-dashboard'></i>
+        <span class="nav-text">Dashboard</span>
+    </a>
+    {% if session.role == 'admin' %}
+    <a href="{{ url_for('entry') }}" class="nav-link {% if request.path == url_for('entry') %}active{% endif %}">
+        <i class='bx bx-plus-circle'></i>
+        <span class="nav-text">New Entry</span>
+    </a>
+    {% endif %}
+    <a href="{{ url_for('report') }}" class="nav-link {% if request.path == url_for('report') %}active{% endif %}">
+        <i class='bx bx-file'></i>
+        <span class="nav-text">Reports</span>
+    </a>
+    {% if session.role == 'admin' %}
+    <a href="{{ url_for('users') }}" class="nav-link {% if request.path == url_for('users') %}active{% endif %}">
+        <i class='bx bx-user'></i>
+        <span class="nav-text">Users</span>
+    </a>
+    {% endif %}
+    {% if session.role == 'admin' %}
+<a href="{{ url_for('import_excel') }}" class="nav-link {% if request.path == url_for('import_excel') %}active{% endif %}">
+    <i class='bx bx-import'></i>
+    <span class="nav-text">Import Data</span>
+</a>
+{% endif %}
+</nav>
 
 <!-- User Profile - Replace this section only -->
 <div class="mt-auto">
