@@ -11,7 +11,7 @@ import calendar
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'
-DATABASE = 'billing.db'
+DATABASE = 'data/billing.db'
 
 # Configure upload folder
 UPLOAD_FOLDER = 'uploads'
@@ -344,8 +344,35 @@ def export_excel():
 
     import io
     db = get_db()
-    query = "SELECT * FROM billing"
-    df = pd.read_sql_query(query, db)
+
+    # Start with base query
+    query = "SELECT * FROM billing WHERE 1=1"
+    params = []
+
+    # Apply the same filters as the report page
+    provider = request.args.get('provider')
+    service = request.args.get('service')
+    month = request.args.get('month')
+    company = request.args.get('company')
+    year = request.args.get('year')
+
+    if provider:
+        query += " AND provider = ?"
+        params.append(provider)
+    if service:
+        query += " AND service = ?"
+        params.append(service)
+    if month:
+        query += " AND month = ?"
+        params.append(month)
+    if company:
+        query += " AND company_name = ?"
+        params.append(company)
+    if year:
+        query += " AND year = ?"
+        params.append(year)
+
+    df = pd.read_sql_query(query, db, params=params)
 
     output = io.BytesIO()
     with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
@@ -373,7 +400,35 @@ def export_pdf():
     from datetime import datetime
 
     db = get_db()
-    data = db.execute("SELECT * FROM billing").fetchall()
+
+    # Start with base query
+    query = "SELECT * FROM billing WHERE 1=1"
+    params = []
+
+    # Apply the same filters as the report page
+    provider = request.args.get('provider')
+    service = request.args.get('service')
+    month = request.args.get('month')
+    company = request.args.get('company')
+    year = request.args.get('year')
+
+    if provider:
+        query += " AND provider = ?"
+        params.append(provider)
+    if service:
+        query += " AND service = ?"
+        params.append(service)
+    if month:
+        query += " AND month = ?"
+        params.append(month)
+    if company:
+        query += " AND company_name = ?"
+        params.append(company)
+    if year:
+        query += " AND year = ?"
+        params.append(year)
+
+    data = db.execute(query, params).fetchall()
 
     # Create PDF with professional design
     buffer = io.BytesIO()
@@ -387,6 +442,27 @@ def export_pdf():
     elements.append(Paragraph("Cloud Billing Report", styles['Title']))
     elements.append(Paragraph(f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M')}", styles['Normal']))
     elements.append(Paragraph(f"User: {session.get('username', 'Unknown')}", styles['Normal']))
+
+    # Add filter details
+    filter_text = "Filters: "
+    filters = []
+    if provider:
+        filters.append(f"Provider: {provider}")
+    if company:
+        filters.append(f"Company: {company}")
+    if year:
+        filters.append(f"Year: {year}")
+    if month:
+        filters.append(f"Month: {month}")
+    if service:
+        filters.append(f"Service: {service}")
+
+    if filters:
+        filter_text += ", ".join(filters)
+    else:
+        filter_text += "All records"
+
+    elements.append(Paragraph(filter_text, styles['Normal']))
     elements.append(Spacer(1, 0.25 * inch))
 
     # Prepare table data
@@ -434,7 +510,6 @@ def export_pdf():
         download_name=f"cloud_billing_report_{datetime.now().strftime('%Y%m%d')}.pdf",
         as_attachment=True
     )
-
 
 @app.route('/import/excel', methods=['GET', 'POST'])
 def import_excel():

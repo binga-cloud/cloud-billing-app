@@ -10,10 +10,10 @@
 </a>
 {% endif %}
 <div class="flex gap-2">
-    <a href="{{ url_for('export_excel') }}" class="btn btn-success">
+    <a href="{{ url_for('export_excel', provider=request.args.get('provider'), company=request.args.get('company'), year=request.args.get('year'), month=request.args.get('month'), service=request.args.get('service')) }}" class="btn btn-success">
         <i class='bx bx-download'></i> Export Excel
     </a>
-    <a href="{{ url_for('export_pdf') }}" class="btn btn-danger">
+    <a href="{{ url_for('export_pdf', provider=request.args.get('provider'), company=request.args.get('company'), year=request.args.get('year'), month=request.args.get('month'), service=request.args.get('service')) }}" class="btn btn-danger">
         <i class='bx bx-file'></i> Export PDF
     </a>
 </div>
