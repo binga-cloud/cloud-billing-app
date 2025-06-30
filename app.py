@@ -11,20 +11,23 @@ import calendar
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'
-DATABASE = 'data/billing.db'
 
-# Configure upload folder
-UPLOAD_FOLDER = 'uploads'
-ALLOWED_EXTENSIONS = {'xlsx', 'xls'}
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+# ====== PERSISTENT DATABASE SETUP FOR AZURE ======
+if 'WEBSITE_SITE_NAME' in os.environ:  # Check if running on Azure
+    DATABASE = '/home/data/billing.db'  # Azure persistent storage path
+else:
+    DATABASE = 'data/billing.db'  # Local path for testing
 
+# Ensure the folder exists
+os.makedirs(os.path.dirname(DATABASE), exist_ok=True)
+
+# Rest of your existing code (keep everything below this line)
+# =================================================
 
 def get_db():
     if 'db' not in g:
         g.db = sqlite3.connect(DATABASE)
     return g.db
-
 
 @app.teardown_appcontext
 def close_db(exception):
@@ -32,10 +35,10 @@ def close_db(exception):
     if db is not None:
         db.close()
 
+# ... (keep all other existing functions and routes below)
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
 
 # Initialize database if it doesn't exist
 if not os.path.exists(DATABASE):
