@@ -177,7 +177,7 @@ def entry():
         conversion_rate = float(request.form['conversion_rate'])
         amount_bdt = round(amount_usd * conversion_rate, 2)
         service_charge = round(amount_bdt * 0.07, 2)
-        vat = round(service_charge * 0.05, 2)
+        vat = round((amount_bdt+service_charge) * 0.05, 2)
         total_bdt = round(amount_bdt + service_charge + vat, 2)
 
         db.execute("""
@@ -591,7 +591,7 @@ def fix_calculations():
     for entry in entries:
         amount_bdt = entry[8]  # amount_bdt is at index 8
         service_charge = round(amount_bdt * 0.07, 2)
-        vat = round(service_charge * 0.05, 2)  # 5% of service charge
+        vat = round((amount_bdt+service_charge) * 0.05, 2)  # 5% of service charge
         total_bdt = round(amount_bdt + service_charge + vat, 2)
 
         db.execute("""
